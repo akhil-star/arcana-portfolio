@@ -1,0 +1,333 @@
+/* ============================================================
+   CUSTOM CURSOR + SPARKLE TRAIL
+   ============================================================ */
+#cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold-highlight);
+  box-shadow: 0 0 10px 2px rgba(241, 215, 154, 0.7);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.15s,
+    height 0.15s,
+    background 0.15s;
+}
+#cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-muted);
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.2s var(--ease-standard),
+    height 0.2s var(--ease-standard),
+    border-color 0.2s;
+}
+#cursor-dot.hover,
+#cursor-ring.hover {
+  width: 14px;
+  height: 14px;
+}
+#cursor-ring.hover {
+  width: 46px;
+  height: 46px;
+  border-color: var(--gold-highlight);
+}
+#cursor-ring.press {
+  width: 18px !important;
+  height: 18px !important;
+  border-color: var(--gold-highlight);
+}
+#sparkle-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+}
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold-highlight);
+  animation: sparkle-fade 0.7s var(--ease-standard) forwards;
+}
+body.no-fancy-cursor #cursor-dot,
+body.no-fancy-cursor #cursor-ring,
+body.no-fancy-cursor #sparkle-layer {
+  display: none;
+}
+@media (hover: none) {
+  body {
+    cursor: auto;
+  }
+  #cursor-dot,
+  #cursor-ring,
+  #sparkle-layer {
+    display: none;
+  }
+}
+
+/* ============================================================
+   BACKGROUND CANVAS + ATMOSPHERE LAYERS
+   ============================================================ */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+#atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+#atmosphere.fallback {
+  /* shown only if WebGL is unavailable */
+  background: radial-gradient(120% 90% at 50% 30%, #1e2532, var(--bg-night));
+}
+#vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 40%,
+    rgba(6, 4, 12, 0.55) 100%
+  );
+}
+
+/* Foreground depth layer — reacts the most to the cursor */
+#fg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  will-change: transform;
+}
+.fg-mote {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(241, 215, 154, 0.65);
+  box-shadow: 0 0 12px rgba(241, 215, 154, 0.45);
+  filter: blur(0.4px);
+  animation: ab-breathe 9s ease-in-out infinite;
+}
+
+/* Shooting star */
+.shooting-star {
+  position: fixed;
+  width: 130px;
+  height: 1.5px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(241, 215, 154, 0.85), transparent);
+  border-radius: 2px;
+  animation: shoot 1.3s ease-out forwards;
+}
+@keyframes shoot {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: -38vw 16vh;
+  }
+}
+
+/* Realm ambient particles (embers for warm realms, dust for archival ones) */
+.ember {
+  position: fixed;
+  border-radius: 50%;
+  background: var(--gold-highlight);
+  box-shadow: 0 0 8px rgba(241, 215, 154, 0.7);
+  pointer-events: none;
+  z-index: 3;
+  animation: ember-rise linear forwards;
+}
+@keyframes ember-rise {
+  from {
+    transform: translate(0, 0);
+    opacity: 0.85;
+  }
+  to {
+    transform: translate(var(--dx, 20px), -55vh);
+    opacity: 0;
+  }
+}
+.dustmote {
+  position: fixed;
+  border-radius: 50%;
+  background: rgba(228, 205, 160, 0.5);
+  pointer-events: none;
+  z-index: 3;
+  animation: dust-drift linear forwards;
+}
+@keyframes dust-drift {
+  from {
+    transform: translate(0, 0);
+    opacity: 0.55;
+  }
+  to {
+    transform: translate(var(--dx, 30px), 12vh);
+    opacity: 0;
+  }
+}
+body.reduced-motion .ambient {
+  animation: none !important;
+}
+
+/* Per-realm ambient light washes */
+.dest::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+.dest.active::before {
+  opacity: 1;
+}
+#dest-library::before {
+  background:
+    radial-gradient(
+      90% 65% at 50% 0%,
+      rgba(201, 133, 58, 0.13),
+      transparent 60%
+    ),
+    radial-gradient(
+      55% 45% at 12% 92%,
+      rgba(110, 70, 32, 0.16),
+      transparent 70%
+    );
+}
+#dest-arcana::before {
+  background:
+    radial-gradient(
+      55% 65% at 50% 100%,
+      rgba(122, 100, 181, 0.16),
+      transparent 70%
+    ),
+    radial-gradient(70% 40% at 50% 0%, rgba(30, 22, 58, 0.5), transparent 70%);
+}
+#dest-forge::before {
+  background:
+    radial-gradient(
+      70% 55% at 50% 100%,
+      rgba(201, 96, 44, 0.15),
+      transparent 65%
+    ),
+    radial-gradient(
+      40% 30% at 82% 85%,
+      rgba(240, 150, 60, 0.1),
+      transparent 70%
+    );
+}
+#dest-guildhall::before {
+  background:
+    radial-gradient(
+      85% 60% at 50% 15%,
+      rgba(212, 175, 55, 0.1),
+      transparent 65%
+    ),
+    radial-gradient(
+      50% 40% at 88% 90%,
+      rgba(90, 74, 138, 0.14),
+      transparent 70%
+    );
+}
+#dest-campfire::before {
+  background: radial-gradient(
+    52% 42% at 50% 90%,
+    rgba(240, 150, 60, 0.2),
+    transparent 65%
+  );
+}
+#dest-case::before {
+  background: radial-gradient(
+    80% 55% at 50% 0%,
+    rgba(58, 47, 92, 0.28),
+    transparent 65%
+  );
+}
+
+/* Constellation — decorative interactive star cluster */
+#constellation {
+  position: fixed;
+  top: 20%;
+  left: 8%;
+  width: 220px;
+  height: 160px;
+  z-index: 2;
+  pointer-events: auto;
+  opacity: 0.55;
+  transition: opacity 0.4s ease;
+}
+#constellation:hover {
+  opacity: 1;
+}
+#constellation .c-line {
+  stroke: var(--gold-highlight);
+  stroke-width: 0;
+  transition: stroke-width 0.5s var(--ease-standard);
+}
+#constellation:hover .c-line {
+  stroke-width: 1;
+}
+#constellation .c-dot {
+  fill: var(--gold-highlight);
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+/* Rune line — quiet vertical ornament, hidden off-landing */
+#rune-line {
+  position: fixed;
+  top: 96px;
+  bottom: 60px;
+  left: 44px;
+  width: 1px;
+  z-index: 5;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(212, 175, 55, 0.4) 15%,
+    rgba(212, 175, 55, 0.4) 85%,
+    transparent
+  );
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+#rune-line .rune-dot {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 1.5px solid var(--gold-primary);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+body:not(.on-landing) #rune-line {
+  opacity: 0;
+}
+@media (max-width: 900px) {
+  #rune-line {
+    display: none;
+  }
+}

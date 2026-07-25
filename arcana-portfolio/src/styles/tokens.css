@@ -1,0 +1,70 @@
+/* ============================================================
+   ARCANA DESIGN SYSTEM TOKENS — single source of truth.
+   Change the brand here and it propagates everywhere.
+   Mirrored in TypeScript at src/styles/tokens.ts for JS consumers
+   (Three.js scene, SVG illustration builders).
+   ============================================================ */
+:root {
+  /* Surfaces */
+  --bg-night: #0b0f14;
+  --surface-1: #121620;
+  --surface-2: #1e2532;
+  --surface-3: #2a3342;
+
+  /* Indigo range */
+  --indigo: #3b4656;
+  --indigo-bright: #5c6b82;
+  --indigo-deep: #2a3342;
+
+  /* Gold range (brand accent) */
+  --gold-primary: #d4af37;
+  --gold-highlight: #f1d79a;
+  --gold-muted: #8f6b2e;
+
+  /* Text */
+  --text-primary: #f4efe1;
+  --text-secondary: #b8bdc7;
+  --text-tertiary: #78808e;
+  --text-on-gold: #0b0f14;
+
+  /* Status */
+  --status-ok: #8fb89a;
+  --status-risk: #e8a87c;
+  --status-partial: #f1d79a;
+  --status-na: rgba(120, 128, 142, 0.8);
+
+  /* Typography */
+  --font-display: 'Cinzel', 'Cinzel Decorative', serif;
+  --font-display-alt: 'Cinzel', 'Marcellus SC', serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Inter', 'Manrope', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  /* Layout */
+  --width-page: 1120px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-deep: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.32);
+  --shadow-inner: inset 0 1px 0 rgba(241, 215, 154, 0.06);
+  --shadow-rim:
+    0 0 0 1px rgba(212, 175, 55, 0.35), 0 0 16px rgba(212, 175, 55, 0.18);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 0.2s;
+  --duration-base: 0.32s;
+  --duration-slow: 0.95s;
+}

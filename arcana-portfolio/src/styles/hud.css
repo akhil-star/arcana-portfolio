@@ -1,0 +1,327 @@
+/* ============================================================
+   HUD — brand + compass nav + toggles
+   ============================================================ */
+header.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px clamp(24px, 5vw, 56px);
+  pointer-events: none;
+}
+header.hud > * {
+  pointer-events: auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  transition: opacity 0.5s ease;
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.4s ease,
+    width 0.4s ease;
+}
+.brand-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--gold-muted);
+  opacity: 0.5;
+}
+.brand-tag {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+  transition: opacity 0.4s ease;
+}
+
+#compass {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(14, 11, 26, 0.5);
+  backdrop-filter: blur(8px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+#compass button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  position: relative;
+  transition: color 0.2s ease;
+}
+#compass button.active {
+  color: var(--gold-highlight);
+}
+#compass button.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-inner);
+  z-index: -1;
+}
+#compass button.secret {
+  color: var(--gold-highlight);
+  display: none;
+}
+#compass button.secret.unlocked {
+  display: inline-block;
+  animation: shimmer 2.4s ease-in-out infinite;
+}
+
+.hud-toggles {
+  display: flex;
+  gap: 10px;
+}
+#motion-toggle,
+#sound-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(11, 15, 20, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+#motion-toggle:hover,
+#sound-toggle:hover {
+  box-shadow: var(--shadow-rim);
+}
+#sound-toggle #sound-slash {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#sound-toggle.muted #sound-slash {
+  opacity: 1;
+}
+#motion-toggle #motion-slash {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+body.reduced-motion #motion-toggle #motion-slash {
+  opacity: 1;
+}
+
+/* On the landing screen the HUD is quiet: name/compass hidden */
+body.on-landing .brand-name,
+body.on-landing .brand-tag,
+body.on-landing .brand-sep {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+body.on-landing #compass {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  #compass button:not(.always-show) {
+    padding: 9px 11px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+}
+
+/* Progress dots — quiet "collect every project" indicator */
+#collect-track {
+  position: fixed;
+  bottom: 20px;
+  right: clamp(20px, 4vw, 48px);
+  z-index: 50;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+#collect-track .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--indigo-deep);
+  border: 1px solid var(--gold-muted);
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+#collect-track .dot.done {
+  background: var(--gold-highlight);
+  box-shadow: 0 0 6px rgba(241, 215, 154, 0.7);
+}
+
+/* Bottom scroll cue (landing only) */
+.scroll-cue-bottom {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  transition: opacity 0.5s ease;
+}
+body:not(.on-landing) .scroll-cue-bottom {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.mouse-icon {
+  width: 16px;
+  height: 24px;
+  border: 1.4px solid var(--gold-muted);
+  border-radius: 9px;
+  position: relative;
+}
+.mouse-icon::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 2px;
+  height: 5px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--gold-primary);
+  animation: mouse-scroll 1.8s ease-in-out infinite;
+}
+@keyframes mouse-scroll {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   TRAVEL OVERLAYS — fog wash, portal burst, gates
+   ============================================================ */
+#fog-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(
+      60% 60% at 50% 50%,
+      rgba(212, 175, 55, 0.16),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(14, 11, 26, 0.92), rgba(14, 11, 26, 0.98));
+}
+#portal-burst {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  pointer-events: none;
+}
+#portal-burst .ring {
+  position: fixed;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-highlight);
+  box-shadow: 0 0 30px rgba(241, 215, 154, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+#gates {
+  position: fixed;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none;
+}
+.gate {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 51%;
+  background: linear-gradient(180deg, #121620, #0b0f14);
+}
+.gate-l {
+  left: 0;
+  box-shadow: inset -40px 0 80px rgba(0, 0, 0, 0.6);
+  border-right: 1px solid rgba(212, 175, 55, 0.5);
+}
+.gate-r {
+  right: 0;
+  box-shadow: inset 40px 0 80px rgba(0, 0, 0, 0.6);
+  border-left: 1px solid rgba(212, 175, 55, 0.5);
+}
+.gate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  opacity: 0.18;
+  pointer-events: none;
+  /* soft vertical highlight instead of repeating stripes */
+  background: linear-gradient(
+    180deg,
+    rgba(241, 215, 154, 0.28),
+    rgba(241, 215, 154, 0.04)
+  );
+  filter: blur(8px);
+  mix-blend-mode: overlay;
+}
+.gate-l::before {
+  right: 0;
+}
+.gate-r::before {
+  left: 0;
+}
+.gate-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(241, 215, 154, 0.9),
+    transparent
+  );
+  filter: blur(1px);
+}

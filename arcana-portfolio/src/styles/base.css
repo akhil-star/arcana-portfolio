@@ -1,0 +1,119 @@
+/* Base reset + global element styles */
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-night);
+}
+body {
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  cursor: none; /* fancy cursor takes over on pointer devices */
+}
+body.no-fancy-cursor {
+  cursor: auto;
+}
+a {
+  color: var(--gold-primary);
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  cursor: none;
+}
+body.no-fancy-cursor button,
+body.no-fancy-cursor a {
+  cursor: pointer;
+}
+::selection {
+  background: var(--gold-muted);
+  color: var(--text-on-gold);
+}
+
+/* Visible keyboard focus — accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--gold-highlight);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Shared ambient keyframes */
+@keyframes ab-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+@keyframes ab-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.015);
+  }
+}
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes sparkle-fade {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* Reduced motion: kill CSS animation/transition timing globally.
+   JS-driven motion checks the same preference via useMotionPrefs(). */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+body.reduced-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* Screen-reader-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

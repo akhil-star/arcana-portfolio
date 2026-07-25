@@ -1,0 +1,9 @@
+/* Global stylesheet entry — imported once from src/main.tsx.
+   Order matters: tokens first, base second, then feature areas. */
+@import './tokens.css';
+@import './base.css';
+@import './atmosphere.css';
+@import './hud.css';
+@import './stage.css';
+@import './realms.css';
+@import './case-study.css';

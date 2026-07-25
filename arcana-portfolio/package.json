@@ -1,0 +1,45 @@
+{
+  "name": "arcana-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Dr Akhil Biju — UX / Product Designer portfolio (Arcana). React + TypeScript + Vite.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint --config .eslintrc.cjs . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint --config .eslintrc.cjs . --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "precompress": "node ./scripts/precompress.cjs",
+    "a11y": "pa11y http://127.0.0.1:4173",
+    "image-report": "node ./scripts/image-report.cjs"
+  },
+  "dependencies": {
+    "framer-motion": "^11.11.17",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.169.0",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "pa11y": "^6.0.0"
+  }
+}

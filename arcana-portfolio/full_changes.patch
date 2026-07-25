@@ -1,0 +1,844 @@
+diff --git a/src/App.tsx b/src/App.tsx
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,200 +1,200 @@
++import { AnimatePresence, motion } from 'framer-motion';
++import { AppStateProvider, useAppState } from '@/hooks/useAppState';
++import { useAmbientAudio } from '@/hooks/useAmbientAudio';
++import { useAmbientEffects } from '@/hooks/useAmbientEffects';
++import { destinationVariants } from '@/animations/variants';
++import { TravelOverlays } from '@/animations/TravelOverlays';
++import React, { Suspense } from 'react';
++const Starfield = React.lazy(() => import('@/three/Starfield').then((m) => ({ default: m.Starfield })));
++import { CustomCursor, AtmosphereDecor } from '@/components/CustomCursor';
++import { Hud, CollectTrack, ScrollCue } from '@/components/Hud';
++import { Landing } from '@/sections/Landing';
++import { Crossroads } from '@/sections/Crossroads';
++import { ArcanaHall } from '@/sections/ArcanaHall';
++import { Library, Forge, Guildhall, Campfire, Secret } from '@/sections/Realms';
++import { CaseStudyView } from '@/caseStudies/CaseStudyView';
++
++/** The one active destination, keyed so AnimatePresence can stage travel. */
++function Stage() {
++  const { location, travelKind, reducedMotion } = useAppState();
++  const key =
++    location.dest === 'case' ? `case-${location.projectId}` : location.dest;
++
++  const content = (() => {
++    switch (location.dest) {
++      case 'landing':
++        return <Landing />;
++      case 'crossroads':
++        return <Crossroads />;
++      case 'arcana':
++        return <ArcanaHall />;
++      case 'library':
++        return <Library />;
++      case 'forge':
++        return <Forge />;
++      case 'guildhall':
++        return <Guildhall />;
++      case 'campfire':
++        return <Campfire />;
++      case 'secret':
++        return <Secret />;
++      case 'case':
++        return location.projectId ? (
++          <CaseStudyView projectId={location.projectId} />
++        ) : null;
++    }
++  })();
++
++  return (
++    <div id="stage">
++      <AnimatePresence mode="wait" custom={travelKind}>
++        <motion.section
++          key={key}
++          /* #dest-<name> ids drive the per-realm CSS light washes */
++          id={`dest-${location.dest}`}
++          className="dest active"
++          custom={travelKind}
++          variants={destinationVariants}
++          initial={reducedMotion ? false : 'enter'}
++          animate="active"
++          exit="exit"
++        >
++          {content}
++        </motion.section>
++      </AnimatePresence>
++    </div>
++  );
++}
++
++function Shell() {
++  useAmbientAudio();
++  useAmbientEffects();
++  return (
++    <>
++      <CustomCursor />
++      <Suspense fallback={null}>
++        <Starfield />
++      </Suspense>
++      <AtmosphereDecor />
++      <TravelOverlays />
++      <Hud />
++      <CollectTrack />
++      <ScrollCue />
++      <Stage />
++    </>
++  );
++}
++
++export default function App() {
++  return (
++    <AppStateProvider>
++      <Shell />
++    </AppStateProvider>
++  );
++}
+diff --git a/src/animations/TravelOverlays.tsx b/src/animations/TravelOverlays.tsx
+--- a/src/animations/TravelOverlays.tsx
++++ b/src/animations/TravelOverlays.tsx
+@@ -1,200 +1,200 @@
++import { useEffect, useRef } from 'react';
++import { animate } from 'framer-motion';
++import { TRAVEL_TIMING, useAppState } from '@/hooks/useAppState';
++import { useTransitionAudio } from '@/hooks/useTransitionAudio';
++
++/**
++ * Full-screen travel overlays. All three layers are permanently mounted
++ * and idle at opacity 0 / off-screen; the choreography is driven
++ * imperatively (framer-motion `animate`) whenever a travel starts, using
++ * the same TRAVEL_TIMING constants as the destination variants so the
++ * cover/reveal phases stay in sync.
++ */
++export function TravelOverlays() {
++  const { traveling, travelKind, reducedMotion } = useAppState();
++  const fogRef = useRef<HTMLDivElement>(null);
++
++  useEffect(() => {
++    if (!traveling) return;
++    const fog = fogRef.current!;
++
++    const { play } = useTransitionAudio();
++
++    if (reducedMotion) return; // instant swap, no theatre
++
++    if (travelKind === 'gates') {
++      // legacy DOM-driven gates choreography (restore original behavior)
++      const gates = document.getElementById('gates');
++      if (!gates) return;
++      const left = gates.querySelector('.gate-l') as HTMLElement | null;
++      const right = gates.querySelector('.gate-r') as HTMLElement | null;
++      const seam = gates.querySelector('.gate-seam') as HTMLElement | null;
++      const cover = TRAVEL_TIMING.cover.gates;
++      const reveal = TRAVEL_TIMING.reveal.gates;
++
++      // initial positions (off-screen)
++      if (left) left.style.transform = 'translateX(-101%) rotateY(0deg)';
++      if (right) right.style.transform = 'translateX(101%) rotateY(0deg)';
++      if (seam) seam.style.opacity = '0';
++
++      // play transition SFX when gates begin to close
++      try { play(); } catch {}
++
++      // close
++      if (left) {
++        animate(
++          left,
++          {
++            transform: [
++              'translateX(-101%) rotateY(0deg)',
++              'translateX(0%) rotateY(0deg)',
++            ],
++          },
++          { duration: cover * 0.92, ease: 'easeInOut' },
++        );
++      }
++      if (right) {
++        animate(
++          right,
++          {
++            transform: [
++              'translateX(101%) rotateY(0deg)',
++              'translateX(0%) rotateY(0deg)',
++            ],
++          },
++          { duration: cover * 0.92, ease: 'easeInOut' },
++        );
++      }
++      if (seam)
++        animate(
++          seam,
++          { opacity: [0, 1] },
++          { duration: 0.35, delay: cover * 0.5 },
++        );
++
++      // open
++      const openDelay = cover + 0.22;
++      if (seam)
++        animate(
++          seam,
++          { opacity: [1, 0] },
++          { duration: 0.48, delay: openDelay, ease: 'easeOut' },
++        );
++      if (left) {
++        animate(
++          left,
++          {
++            transform: [
++              'translateX(0%) rotateY(0deg)',
++              'translateX(-120%) rotateY(14deg)',
++            ],
++          },
++          { duration: reveal, delay: openDelay, ease: 'easeOut' },
++        );
++      }
++      if (right) {
++        animate(
++          right,
++          {
++            transform: [
++              'translateX(0%) rotateY(0deg)',
++              'translateX(120%) rotateY(-14deg)',
++            ],
++          },
++          { duration: reveal, delay: openDelay, ease: 'easeOut' },
++        );
++      }
++      return;
++    } else {
++      // fog / portal / quest all use the fog wash (portal & quest add a
++      // ring burst at the click origin — see burstPortalRing below).
++      const cover = TRAVEL_TIMING.cover[travelKind];
++      const reveal = TRAVEL_TIMING.reveal[travelKind];
++      animate(fog, { opacity: [0, 1] }, { duration: cover, ease: 'easeInOut' });
++      animate(
++        fog,
++        { opacity: 0 },
++        { duration: reveal, delay: cover + 0.1, ease: 'easeInOut' },
++      );
++    }
++  }, [traveling, travelKind, reducedMotion]);
++
++  return (
++    <>
++      <div id="fog-transition" ref={fogRef} aria-hidden="true" />
++      <div id="portal-burst" aria-hidden="true" />
++      {/* Restored original static gates markup; choreography is driven
++          imperatively in the effect above so we don't mount a motion
++          component here. */}
++      <div id="gates" aria-hidden="true">
++        <div
++          className="gate gate-l"
++          style={{
++            transform: 'translateX(-101%)',
++            transformStyle: 'preserve-3d',
++          }}
++        />
++        <div
++          className="gate gate-r"
++          style={{
++            transform: 'translateX(101%)',
++            transformStyle: 'preserve-3d',
++          }}
++        />
++        <div className="gate-seam" style={{ opacity: 0 }} />
++      </div>
++    </>
++  );
++}
++
++/**
++ * Fire a golden ring burst at a screen position (portal travels,
++ * Begin Quest). Imperative on purpose: it's a transient DOM effect that
++ * should never cause a React re-render.
++ */
++export function burstPortalRing(x: number, y: number, maxSize = 900) {
++  const host = document.getElementById('portal-burst');
++  if (!host) return;
++  const ring = document.createElement('div');
++  ring.className = 'ring';
++  ring.style.left = `${x}px`;
++  ring.style.top = `${y}px`;
++  ring.style.width = '20px';
++  ring.style.height = '20px';
++  host.appendChild(ring);
++  animate(
++    ring,
++    { width: `${maxSize}px`, height: `${maxSize}px`, opacity: [1, 0] },
++    { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
++  ).then(() => ring.remove());
++}
+diff --git a/src/styles/hud.css b/src/styles/hud.css
+--- a/src/styles/hud.css
++++ b/src/styles/hud.css
+@@ -1,999 +1,999 @@
++/* ============================================================
++   HUD — brand + compass nav + toggles
++   ============================================================ */
++header.hud {
++  position: fixed;
++  top: 0;
++  left: 0;
++  right: 0;
++  z-index: 50;
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 20px;
++  padding: 22px clamp(24px, 5vw, 56px);
++  pointer-events: none;
++}
++header.hud > * {
++  pointer-events: auto;
++}
++.brand {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  background: none;
++  border: none;
++  color: var(--text-primary);
++  transition: opacity 0.5s ease;
++}
++.brand-name {
++  font-family: var(--font-display);
++  font-size: 16px;
++  letter-spacing: 0.18em;
++  text-transform: uppercase;
++  transition:
++    opacity 0.4s ease,
++    width 0.4s ease;
++}
++.brand-sep {
++  width: 1px;
++  height: 16px;
++  background: var(--gold-muted);
++  opacity: 0.5;
++}
++.brand-tag {
++  font-size: 10px;
++  letter-spacing: 0.24em;
++  color: var(--gold-primary);
++  text-transform: uppercase;
++  transition: opacity 0.4s ease;
++}
++
++#compass {
++  display: flex;
++  align-items: center;
++  gap: 4px;
++  padding: 6px;
++  border-radius: var(--radius-pill);
++  border: 1px solid rgba(212, 175, 55, 0.28);
++  background: rgba(14, 11, 26, 0.5);
++  backdrop-filter: blur(8px);
++  transition:
++    opacity 0.5s ease,
++    transform 0.5s ease;
++}
++#compass button {
++  background: none;
++  border: none;
++  color: var(--text-secondary);
++  font-size: 11px;
++  letter-spacing: 0.16em;
++  text-transform: uppercase;
++  padding: 9px 16px;
++  border-radius: var(--radius-pill);
++  position: relative;
++  transition: color 0.2s ease;
++}
++#compass button.active {
++  color: var(--gold-highlight);
++}
++#compass button.active::before {
++  content: '';
++  position: absolute;
++  inset: 0;
++  border-radius: var(--radius-pill);
++  background: var(--surface-2);
++  box-shadow: var(--shadow-inner);
++  z-index: -1;
++}
++#compass button.secret {
++  color: var(--gold-highlight);
++  display: none;
++}
++#compass button.secret.unlocked {
++  display: inline-block;
++  animation: shimmer 2.4s ease-in-out infinite;
++}
++
++.hud-toggles {
++  display: flex;
++  gap: 10px;
++}
++#motion-toggle,
++#sound-toggle {
++  width: 38px;
++  height: 38px;
++  border-radius: 50%;
++  border: 1px solid rgba(212, 175, 55, 0.4);
++  background: rgba(11, 15, 20, 0.5);
++  backdrop-filter: blur(8px);
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  transition:
++    box-shadow 0.2s ease,
++    border-color 0.2s ease;
++}
++#motion-toggle:hover,
++#sound-toggle:hover {
++  box-shadow: var(--shadow-rim);
++}
++#sound-toggle #sound-slash {
++  opacity: 0;
++  transition: opacity 0.2s ease;
++}
++#sound-toggle.muted #sound-slash {
++  opacity: 1;
++}
++#motion-toggle #motion-slash {
++  opacity: 0;
++  transition: opacity 0.2s ease;
++}
++body.reduced-motion #motion-toggle #motion-slash {
++  opacity: 1;
++}
++
++/* On the landing screen the HUD is quiet: name/compass hidden */
++body.on-landing .brand-name,
++body.on-landing .brand-tag,
++body.on-landing .brand-sep {
++  opacity: 0;
++  width: 0;
++  overflow: hidden;
++}
++body.on-landing #compass {
++  opacity: 0;
++  transform: translateY(-6px);
++  pointer-events: none;
++}
++
++@media (max-width: 860px) {
++  #compass button:not(.always-show) {
++    padding: 9px 11px;
++    font-size: 9px;
++    letter-spacing: 0.08em;
++  }
++}
++
++/* Progress dots — quiet "collect every project" indicator */
++#collect-track {
++  position: fixed;
++  bottom: 20px;
++  right: clamp(20px, 4vw, 48px);
++  z-index: 50;
++  display: flex;
++  gap: 7px;
++  align-items: center;
++}
++#collect-track .dot {
++  width: 6px;
++  height: 6px;
++  border-radius: 50%;
++  background: var(--indigo-deep);
++  border: 1px solid var(--gold-muted);
++  transition:
++    background 0.3s ease,
++    box-shadow 0.3s ease;
++}
++#collect-track .dot.done {
++  background: var(--gold-highlight);
++  box-shadow: 0 0 6px rgba(241, 215, 154, 0.7);
++}
++
++/* Bottom scroll cue (landing only) */
++.scroll-cue-bottom {
++  position: fixed;
++  left: 50%;
++  bottom: 22px;
++  transform: translateX(-50%);
++  z-index: 5;
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  font-size: 11px;
++  letter-spacing: 0.1em;
++  color: var(--text-tertiary);
++  transition: opacity 0.5s ease;
++}
++body:not(.on-landing) .scroll-cue-bottom {
++  opacity: 0 !important;
++  pointer-events: none;
++}
++.mouse-icon {
++  width: 16px;
++  height: 24px;
++  border: 1.4px solid var(--gold-muted);
++  border-radius: 9px;
++  position: relative;
++}
++.mouse-icon::before {
++  content: '';
++  position: absolute;
++  top: 4px;
++  left: 50%;
++  width: 2px;
++  height: 5px;
++  margin-left: -1px;
++  border-radius: 1px;
++  background: var(--gold-primary);
++  animation: mouse-scroll 1.8s ease-in-out infinite;
++}
++@keyframes mouse-scroll {
++  0% {
++    opacity: 1;
++    transform: translateY(0);
++  }
++  70% {
++    opacity: 0;
++    transform: translateY(6px);
++  }
++  100% {
++    opacity: 0;
++    transform: translateY(0);
++  }
++}
++
++/* ============================================================
++   TRAVEL OVERLAYS — fog wash, portal burst, gates
++   ============================================================ */
++#fog-transition {
++  position: fixed;
++  inset: 0;
++  z-index: 40;
++  pointer-events: none;
++  opacity: 0;
++  background:
++    radial-gradient(
++      60% 60% at 50% 50%,
++      rgba(212, 175, 55, 0.16),
++      transparent 60%
++    ),
++    linear-gradient(180deg, rgba(14, 11, 26, 0.92), rgba(14, 11, 26, 0.98));
++}
++#portal-burst {
++  position: fixed;
++  inset: 0;
++  z-index: 41;
++  pointer-events: none;
++}
++#portal-burst .ring {
++  position: fixed;
++  border-radius: 50%;
++  border: 1.5px solid var(--gold-highlight);
++  box-shadow: 0 0 30px rgba(241, 215, 154, 0.5);
++  transform: translate(-50%, -50%);
++}
++
++#gates {
++  position: fixed;
++  inset: 0;
++  z-index: 46;
++  pointer-events: none;
++}
++.gate {
++  position: absolute;
++  top: 0;
++  bottom: 0;
++  width: 51%;
++  background: linear-gradient(180deg, #121620, #0b0f14);
++}
++.gate-l {
++  left: 0;
++  box-shadow: inset -40px 0 80px rgba(0, 0, 0, 0.6);
++  border-right: 1px solid rgba(212, 175, 55, 0.5);
++}
++.gate-r {
++  right: 0;
++  box-shadow: inset 40px 0 80px rgba(0, 0, 0, 0.6);
++  border-left: 1px solid rgba(212, 175, 55, 0.5);
++}
++.gate::before {
++  content: '';
++  position: absolute;
++  top: 0;
++  bottom: 0;
++  width: 120px;
++  opacity: 0.18;
++  pointer-events: none;
++  /* soft vertical highlight instead of repeating stripes */
++  background: linear-gradient(
++    180deg,
++    rgba(241, 215, 154, 0.28),
++    rgba(241, 215, 154, 0.04)
++  );
++  filter: blur(8px);
++  mix-blend-mode: overlay;
++}
++.gate-l::before {
++  right: 0;
++}
++.gate-r::before {
++  left: 0;
++}
++.gate-seam {
++  position: absolute;
++  top: 0;
++  bottom: 0;
++  left: 50%;
++  width: 2px;
++  margin-left: -1px;
++  background: linear-gradient(
++    180deg,
++    transparent,
++    rgba(241, 215, 154, 0.9),
++    transparent
++  );
++  filter: blur(1px);
++}
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,200 +1,200 @@
+ {
+   "name": "arcana-portfolio",
+   "private": true,
+   "version": "1.0.0",
+   "description": "Dr Akhil Biju — UX / Product Designer portfolio (Arcana). React + TypeScript + Vite.",
+   "type": "module",
+   "scripts": {
+     "dev": "vite",
+     "build": "tsc -b && vite build",
+     "preview": "vite preview",
+     "typecheck": "tsc -b --noEmit",
+     "lint": "eslint --config .eslintrc.cjs . --ext .ts,.tsx,.js,.jsx",
+     "lint:fix": "eslint --config .eslintrc.cjs . --ext .ts,.tsx,.js,.jsx --fix",
+     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+     "precompress": "node ./scripts/precompress.cjs",
+     "a11y": "pa11y http://127.0.0.1:4173",
+     "image-report": "node ./scripts/image-report.cjs"
+   },
+   "dependencies": {
+     "framer-motion": "^11.11.17",
+     "react": "^18.3.1",
+     "react-dom": "^18.3.1",
+     "three": "^0.169.0"
+   },
+   "devDependencies": {
+     "@types/node": "^26.1.1",
+     "@types/react": "^18.3.12",
+     "@types/react-dom": "^18.3.1",
+     "@types/three": "^0.169.0",
+     "@typescript-eslint/eslint-plugin": "^8.65.0",
+     "@typescript-eslint/parser": "^8.65.0",
+     "@vitejs/plugin-react": "^4.3.4",
+     "eslint": "^8.57.1",
+     "eslint-config-prettier": "^10.1.8",
+     "eslint-import-resolver-typescript": "^4.4.5",
+     "eslint-plugin-import": "^2.32.0",
+     "eslint-plugin-prettier": "^5.5.6",
+     "eslint-plugin-react": "^7.37.5",
+     "eslint-plugin-react-hooks": "^7.1.1",
+     "prettier": "^3.9.6",
+     "typescript": "^5.6.3",
+     "vite": "^5.4.11",
+     "pa11y": "^6.0.0"
+   }
+ }
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -1,200 +1,200 @@
++name: CI
++
++on:
++  push:
++    branches: [ main, master ]
++  pull_request:
++    branches: [ main, master ]
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - name: Use Node.js
++        uses: actions/setup-node@v4
++        with:
++          node-version: 18
++          cache: 'npm'
++      - name: Install deps
++        run: npm ci
++      - name: Typecheck
++        run: npm run typecheck
++      - name: Lint
++        run: npm run lint
++      - name: Build
++        run: npm run build
++      - name: Precompress assets
++        run: npm run precompress
++      - name: Serve dist and run accessibility checks
++        run: |
++          npx http-server dist -p 4174 -c-1 &
++          sleep 2
++          npx pa11y http://127.0.0.1:4174 || true
++          pkill -f http-server || true
++      - name: Artifact size
++        run: |
++          du -sh dist || true
+diff --git a/scripts/precompress.cjs b/scripts/precompress.cjs
+--- /dev/null
++++ b/scripts/precompress.cjs
+@@ -0,0 +1,200 @@
++const fs = require('fs');
++const path = require('path');
++const zlib = require('zlib');
++
++const dist = path.resolve(__dirname, '..', 'dist');
++
++function walk(dir) {
++  const entries = fs.readdirSync(dir, { withFileTypes: true });
++  for (const e of entries) {
++    const full = path.join(dir, e.name);
++    if (e.isDirectory()) walk(full);
++    else if (/\.(js|css|html|json|svg|txt)$/.test(e.name)) compress(full);
++  }
++}
++
++function compress(file) {
++  const content = fs.readFileSync(file);
++  // gzip
++  const gz = zlib.gzipSync(content, { level: zlib.constants.Z_BEST_COMPRESSION });
++  fs.writeFileSync(file + '.gz', gz);
++  // brotli
++  const br = zlib.brotliCompressSync(content, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11 } });
++  fs.writeFileSync(file + '.br', br);
++  console.log('compressed', file);
++}
++
++if (!fs.existsSync(dist)) {
++  console.error('dist/ not found — run `npm run build` first');
++  process.exit(1);
++}
++walk(dist);
++console.log('precompress complete');
+diff --git a/scripts/image-report.cjs b/scripts/image-report.cjs
+--- /dev/null
++++ b/scripts/image-report.cjs
+@@ -0,0 +1,200 @@
++const fs = require('fs');
++const path = require('path');
++
++const dir = path.resolve(__dirname, '..', 'public', 'assets');
++if (!fs.existsSync(dir)) {
++  console.error('No public/assets directory');
++  process.exit(1);
++}
++
++function walk(d) {
++  const entries = fs.readdirSync(d, { withFileTypes: true });
++  for (const e of entries) {
++    const full = path.join(d, e.name);
++    if (e.isDirectory()) walk(full);
++    else {
++      const stat = fs.statSync(full);
++      console.log(`${path.relative(dir, full)} - ${(stat.size/1024).toFixed(1)} KB`);
++    }
++  }
++}
++
++walk(dir);
+diff --git a/src/hooks/useTransitionAudio.ts b/src/hooks/useTransitionAudio.ts
+--- /dev/null
++++ b/src/hooks/useTransitionAudio.ts
+@@ -0,0 +1,200 @@
++import { useEffect, useRef } from 'react';
++
++export function useTransitionAudio(enabled = true) {
++  const audioRef = useRef<HTMLAudioElement | null>(null);
++
++  useEffect(() => {
++    try {
++      const a = new Audio('/audio/transition.mp3');
++      a.preload = 'auto';
++      audioRef.current = a;
++    } catch (e) {
++      audioRef.current = null;
++    }
++  }, []);
++
++  function play() {
++    if (!enabled) return;
++    const a = audioRef.current;
++    if (!a) return;
++    a.currentTime = 0;
++    // best-effort play; browsers may block if not user-initiated
++    a.play().catch(() => {});
++  }
++
++  return { play };
++}
+diff --git a/archive/DoorTransition.tsx b/archive/DoorTransition.tsx
+--- /dev/null
++++ b/archive/DoorTransition.tsx
+@@ -0,0 +1,200 @@
++import { useEffect } from 'react';
++import { motion, useAnimation } from 'framer-motion';
++import { TRAVEL_TIMING } from '@/hooks/useAppState';
++import TransitionFX from '@/three/TransitionFX';
++
++type Props = { active: boolean };
++
++export default function DoorTransition({ active }: Props) {
++  const left = useAnimation();
++  const right = useAnimation();
++  const seam = useAnimation();
++
++  useEffect(() => {
++    if (!active) return;
++
++    const cover = TRAVEL_TIMING.cover.gates;
++    const reveal = TRAVEL_TIMING.reveal.gates;
++
++    Promise.all([
++      left.start({ x: '0%', rotateY: 0, transition: { duration: cover * 0.9, ease: [0.4, 0, 0.2, 1] } }),
++      right.start({ x: '0%', rotateY: 0, transition: { duration: cover * 0.9, ease: [0.4, 0, 0.2, 1] } }),
++      seam.start({ opacity: 1, transition: { duration: 0.35, delay: cover * 0.5 } }),
++    ]).then(() => {
++      const openDelay = cover + 0.22;
++      seam.start({ opacity: 0, transition: { duration: 0.45, delay: openDelay } });
++      left.start({ x: '-120%', rotateY: 14, transition: { duration: reveal, delay: openDelay, ease: [0.2, 0.9, 0.25, 1] } });
++      right.start({ x: '120%', rotateY: -14, transition: { duration: reveal, delay: openDelay, ease: [0.2, 0.9, 0.25, 1] } });
++    });
++  }, [active, left, right, seam]);
++
++  return null;
++}
+diff --git a/archive/TransitionFX.tsx b/archive/TransitionFX.tsx
+--- /dev/null
++++ b/archive/TransitionFX.tsx
+@@ -0,0 +1,200 @@
++import { useEffect, useRef } from 'react';
++import * as THREE from 'three';
++
++type Props = { active: boolean };
++
++export default function TransitionFX({ active }: Props) {
++  // archived copy
++  return null;
++}
+diff --git a/src/three/TransitionFX.tsx b/src/three/TransitionFX.tsx
+--- a/src/three/TransitionFX.tsx
++++ /dev/null
+@@ -1,400 +0,0 @@
+-// (deleted)
+diff --git a/src/animations/DoorTransition.tsx b/src/animations/DoorTransition.tsx
+--- a/src/animations/DoorTransition.tsx
++++ /dev/null
+@@ -1,400 +0,0 @@
+-// (deleted)

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Precompress assets
+        run: npm run precompress
+      - name: Serve dist and run accessibility checks
+        run: |
+          npx http-server dist -p 4174 -c-1 &
+          sleep 2
+          npx pa11y http://127.0.0.1:4174 || true
+          pkill -f http-server || true
+      - name: Artifact size
+        run: |
+          du -sh dist || true
