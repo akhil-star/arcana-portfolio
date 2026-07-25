@@ -113,7 +113,7 @@ export const destinationVariants: Variants = {
         { opacity: 0, transition: { duration: 0.15 } }
       : {
           opacity: 0,
-          transition: { duration: TRAVEL_TIMING.cover[kind] * 0.7, ease },
+          transition: { duration: TRAVEL_TIMING.cover[kind], ease },
         },
 };
 
