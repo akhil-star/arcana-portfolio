@@ -13,12 +13,11 @@ import { useTransitionAudio } from '@/hooks/useTransitionAudio';
 export function TravelOverlays() {
   const { traveling, travelKind, reducedMotion } = useAppState();
   const fogRef = useRef<HTMLDivElement>(null);
+  const { play } = useTransitionAudio();
 
   useEffect(() => {
     if (!traveling) return;
     const fog = fogRef.current!;
-
-    const { play } = useTransitionAudio();
 
     if (reducedMotion) return; // instant swap, no theatre
 
